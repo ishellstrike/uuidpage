@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include "filesystem.h"
-#include "uuid.h"
 
 struct uuid_file
 {
@@ -14,9 +13,6 @@ struct uuid_file
     bool next();
     void open(const std::string &s);
     void close();
-
-    uuid_file(const uuid &val) = delete;
-    uuid_file &operator =(uuid &val) = delete;
 };
 
 bool lesser_comparator(const std::string &s1, const std::string &s2)
@@ -44,8 +40,8 @@ void place_min_file_on_top(std::vector<uuid_file> &all_uuids, bool (*comparator)
     {
         if(!(*comparator)(all_uuids[i].last_readed, cur))
         {
-                cur_n = i;
-                cur = all_uuids[i].last_readed;
+            cur_n = i;
+            cur = all_uuids[i].last_readed;
         }
     }
     std::swap(all_uuids[0], all_uuids[cur_n]);
@@ -60,10 +56,10 @@ int main(int argc, char *argv[])
     }
     int n = 0;
     sscanf(argv[2], "%d", &n);
-    int PAGE_SIZE = 500;
+    int page_size = 500;
     if(argc == 4)
     {
-        sscanf(argv[3], "%d", &PAGE_SIZE);
+        sscanf(argv[3], "%d", &page_size);
     }
     std::string dir = argv[1];
 
@@ -81,6 +77,7 @@ int main(int argc, char *argv[])
         std::string second = t.last_readed;
         inc = first < second;
         t.close();
+        inc ? printf("increasing\n") : printf("decreasing\n");
     }
     bool (*comparator)(const std::string &s1, const std::string &s2) = inc ? greater_comparator : lesser_comparator;
 
@@ -94,26 +91,19 @@ int main(int argc, char *argv[])
     place_min_file_on_top(all_uuids, comparator);
 
     int from_top_counter = 0;
-    int bottom_try_winner = 0; //номер файла, в котором будет располагаться следующий uuid
-    std::string top_mark;
+    int bottom_try_winner = 0; //номер файла, в котором располается следующий за top_mark uuid
+    std::string top_mark = all_uuids[0].last_readed;
+    std::string bottom_mark;
+    all_uuids[0].next();
+    int iterations;
+    bool end = false;
 
-    while (from_top_counter < (n+1)*PAGE_SIZE)
+    while (from_top_counter < (n+1)*page_size && !end)
     {
-        if(bottom_try_winner == 0) { //если нижняя метка была найдена у другом файле, то новую искать в первом файле еще рано
-            top_mark = all_uuids[0].last_readed;
-            if(!all_uuids[0].next()) //мы дошли до конца первого файла
-            {
-                if(all_uuids.size() == 1) //это последний файл и он кончится, перебрали всё
-                    break;
-                place_min_file_on_top(all_uuids, comparator); //ищем новый первый, старый удаляем
-                std::swap(all_uuids[0], all_uuids[all_uuids.size() - 1]);
-                all_uuids.pop_back();
-            }
-        }
-        std::string bottom_mark = all_uuids[0].last_readed; //выставляем нижнюю метку
+        bottom_mark = all_uuids[0].last_readed; //выставляем нижнюю метку
 
         bottom_try_winner = 0;
-        for(int i = 1; i < all_uuids.size(); ++i) //ищем возможные повышения верхней метки в остальных файлах
+        for(int i = 1; i < all_uuids.size(); ++i) //ищем возможные повышения нижней метки в остальных файлах
         {
             std::string bottom_try = all_uuids[i].last_readed;
             if(!(*comparator)(bottom_try, bottom_mark))
@@ -121,27 +111,35 @@ int main(int argc, char *argv[])
                 bottom_mark = bottom_try;
                 bottom_try_winner = i;
             }
+            iterations++;
         }
 
-        if(bottom_try_winner != 0) {
-            if(!all_uuids[bottom_try_winner].next()) //смещаем положение файла, который хранил следующий uuid
-            {                                        //если смещение не удалось, то файл кончился, удаляем его
-                std::swap(all_uuids[all_uuids.size() - 1], all_uuids[bottom_try_winner]);
-                all_uuids.pop_back();
-            }
+        if(!all_uuids[bottom_try_winner].next()) //смещаем положение файла, который хранил верхнюю метку
+        {                                        //если смещение не удалось, то файл кончился, удаляем его
+            std::swap(all_uuids[all_uuids.size() - 1], all_uuids[bottom_try_winner]);
+            all_uuids.pop_back();
+            if(all_uuids.size() == 0)            //файла кончились
+                end = true;
         }
+
         //найден гарантированно следующий uuid
         ++from_top_counter;
-        if(from_top_counter > n*PAGE_SIZE)
+        if(from_top_counter > n*page_size)
         {
             printf("%s\n", top_mark.c_str());
         }
         top_mark = bottom_mark;
     }
-
-    for(auto a : all_uuids)
+    if(all_uuids.size() == 0 && from_top_counter < (n+1)*page_size) //если мы дошли до конца всех файлов, то, возможно, пропущен 1 uuid
     {
-        a.close();
+        printf("%s\n", top_mark.c_str());
+    }
+
+    printf("iter:%d count:%d\n", iterations, from_top_counter);
+
+    for(int i = 0; i < all_uuids.size(); ++i)
+    {
+        all_uuids[i].close();
     }
 
     return 0;
