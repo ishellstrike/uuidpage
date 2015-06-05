@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 
         if(!all_uuids[bottom_try_winner].next()) //смещаем положение файла, который хранил верхнюю метку
         {                                        //если смещение не удалось, то файл кончился, удаляем его
+            all_uuids[bottom_try_winner].close();
             std::swap(all_uuids[all_uuids.size() - 1], all_uuids[bottom_try_winner]);
             all_uuids.pop_back();
             if(all_uuids.size() == 0)            //файлы кончились
