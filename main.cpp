@@ -25,28 +25,6 @@ bool greater_comparator(const std::string &s1, const std::string &s2)
     return s1 > s2;
 }
 
-/**
- * @brief place_min_file_on_top Найти файл, содержащий минимальный элемент
- * в текущей позиции и устанавливает его в положение 0 в списке файлов
- *
- * @param all_uuids список файлов uuid
- * @param comparator компаратор, абстрагирующий убывает сортировка или возрастает
- */
-void place_min_file_on_top(std::vector<uuid_file> &all_uuids, bool (*comparator)(const std::string &s1, const std::string &s2))
-{
-    std::string cur = all_uuids[0].last_readed;
-    int cur_n = 0;
-    for(unsigned int i = 1; i < all_uuids.size(); ++i)
-    {
-        if(!(*comparator)(all_uuids[i].last_readed, cur))
-        {
-            cur_n = i;
-            cur = all_uuids[i].last_readed;
-        }
-    }
-    std::swap(all_uuids[0], all_uuids[cur_n]);
-}
-
 int main(int argc, char *argv[])
 {
     if(argc < 3)
@@ -87,8 +65,6 @@ int main(int argc, char *argv[])
         all_uuids.emplace_back();
         all_uuids[all_uuids.size() - 1].open("./"+dir+"/"+a);
     }
-
-    //place_min_file_on_top(all_uuids, comparator);
 
     int from_top_counter = 0;
     std::string bottom_mark;
