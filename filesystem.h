@@ -70,6 +70,8 @@
         {
             throw "unable to open directory";
         }
+
+        closedir(direct);
     }
 #endif
 
