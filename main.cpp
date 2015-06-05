@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
         }
         top_mark = bottom_mark;
     }
-    if(all_uuids.size() == 0 && from_top_counter < (n+1)*page_size) //если мы дошли до конца всех файлов, то, возможно, пропущен 1 uuid
+    if(all_uuids.size() == 0 && from_top_counter > n*page_size && from_top_counter < (n+1)*page_size) //если мы дошли до конца всех файлов, то, возможно, пропущен 1 uuid
     {
         printf("%s\n", top_mark.c_str());
     }
