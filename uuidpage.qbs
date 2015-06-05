@@ -7,6 +7,8 @@ CppApplication {
     files: [
         "filesystem.h",
         "main.cpp",
+        "uuid_file.cpp",
+        "uuid_file.h",
         "uuidgen.sh",
     ]
 

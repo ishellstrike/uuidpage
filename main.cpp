@@ -3,20 +3,8 @@
 #include <string>
 #include "filesystem.h"
 #include <memory>
-
-struct uuid_file
-{
-    FILE *text_file = nullptr;
-    std::string last_readed;
-
-    uuid_file(const std::string &file);
-    ~uuid_file();
-    bool next();
-
-
-    uuid_file(const uuid_file &other) = delete;
-    uuid_file &operator =(const uuid_file &other) = delete;
-};
+#include "uuid_file.h"
+#include <algorithm>
 
 bool lesser_comparator(const std::string &s1, const std::string &s2)
 {
@@ -28,26 +16,8 @@ bool greater_comparator(const std::string &s1, const std::string &s2)
     return s1 > s2;
 }
 
-int main(int argc, char *argv[])
+void uuid_page_finder(std::vector<std::string> &files, const std::string &dir, int page, int page_size)
 {
-    if(argc < 3)
-    {
-        printf("usage: uuidpage <directory> <page> [page_size]\n");
-        return 0;
-    }
-    int n = 0;
-    sscanf(argv[2], "%d", &n);
-    int page_size = 500;
-    if(argc == 4)
-    {
-        sscanf(argv[3], "%d", &page_size);
-    }
-    std::string dir = argv[1];
-
-    std::vector<std::string> files;
-    getFiles(dir, files);
-
-
     bool inc;
     {
         //определяем направление сортировки
@@ -71,7 +41,7 @@ int main(int argc, char *argv[])
     int iterations = 0;
     bool end = false;
 
-    while (from_top_counter < (n+1)*page_size && !end)
+    while (from_top_counter < (page+1)*page_size && !end)
     {
         bottom_mark = all_uuids[0]->last_readed; //выставляем нижнюю метку
 
@@ -95,37 +65,36 @@ int main(int argc, char *argv[])
         }
 
         ++from_top_counter;
-        if(from_top_counter > n*page_size)
+        if(from_top_counter > page*page_size)
         {
             printf("%s\n", bottom_mark.c_str());
         }
     }
 
     printf("iter:%d count:%d\n", iterations, from_top_counter);
+}
+
+int main(int argc, char *argv[])
+{
+    if(argc < 3)
+    {
+        printf("usage: uuidpage <directory> <page> [page_size]\n");
+        return 0;
+    }
+    int page = 0;
+    sscanf(argv[2], "%d", &page);
+    int page_size = 500;
+    if(argc == 4)
+    {
+        sscanf(argv[3], "%d", &page_size);
+    }
+    std::string dir = argv[1];
+
+    std::vector<std::string> files;
+    getFiles(dir, files);
+
+    uuid_page_finder(files, dir, page, page_size);
 
     return 0;
-}
-
-uuid_file::uuid_file(const std::string &file)
-{
-    text_file = fopen(file.c_str(), "r");
-    last_readed.resize(36);
-
-    fscanf(text_file, "%s\n", &last_readed[0]);
-}
-
-uuid_file::~uuid_file()
-{
-    if(text_file)
-    {
-        fclose(text_file);
-        text_file = nullptr;
-    }
-}
-
-bool uuid_file::next()
-{
-    fscanf(text_file, "%s\n", &last_readed[0]);
-    return !feof(text_file);
 }
 
